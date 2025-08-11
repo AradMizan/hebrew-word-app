@@ -157,6 +157,7 @@
   let currentIndex = 0;       // אינדקס המילה הנוכחית במערך
   let skipsLeft = 2;          // דילוגים שנותרו
   let timerStarted = false;   // האם הטיימר רץ
+  let usedWordsInRound = [];  // מילים שכבר הוצגו בסבב הנוכחי
 
   const getWordBtn = document.getElementById('getWordBtn');
   const skipBtn = document.getElementById('skipBtn');
@@ -214,25 +215,31 @@
       skipsLeft = 2;
       skipBtn.disabled = false;
       skipBtn.textContent = `דלג על מילה (${skipsLeft})`;
+      usedWordsInRound = [];
     }
 
-    if (currentIndex >= words.length) {
-      alert("הגעת לסוף המילים! לחץ על 'ערבב מילים' כדי להתחיל מחדש.");
+    if (usedWordsInRound.length >= words.length) {
+      alert("הגעת לסוף המילים ללא חזרות! לחץ על 'ערבב מילים' כדי להתחיל מחדש.");
       getWordBtn.disabled = true;
       skipBtn.disabled = true;
       return;
     }
 
-    wordDiv.textContent = words[currentIndex];
+    let word;
+    do {
+      if (currentIndex >= words.length) {
+        currentIndex = 0;
+      }
+      word = words[currentIndex];
+      currentIndex++;
+    } while (usedWordsInRound.includes(word));
+
+    usedWordsInRound.push(word);
+    wordDiv.textContent = word;
+
     count++;
     counterSpan.textContent = count;
-    currentIndex++;
-
-    if (currentIndex >= words.length) {
-      roundStartIndex = currentIndex;
-      getWordBtn.disabled = true;
-      skipBtn.disabled = true;
-    }
+    roundStartIndex = currentIndex;
   }
 
   function skipWord() {
@@ -244,24 +251,33 @@
       skipsLeft = 2;
       skipBtn.disabled = false;
       skipBtn.textContent = `דלג על מילה (${skipsLeft})`;
+      usedWordsInRound = [];
     }
 
-    if (skipsLeft > 0 && currentIndex < words.length) {
+    if (skipsLeft > 0 && usedWordsInRound.length < words.length) {
       skipsLeft--;
-      currentIndex++;
+
+      let word;
+      do {
+        if (currentIndex >= words.length) {
+          currentIndex = 0;
+        }
+        word = words[currentIndex];
+        currentIndex++;
+      } while (usedWordsInRound.includes(word));
+
+      usedWordsInRound.push(word);
+
       skipBtn.textContent = `דלג על מילה (${skipsLeft})`;
 
       if (skipsLeft === 0) {
         skipBtn.disabled = true;
       }
 
-      if (currentIndex >= words.length) {
-        roundStartIndex = currentIndex;
-        getWordBtn.disabled = true;
-        skipBtn.disabled = true;
-      }
-
-      wordDiv.textContent = words[currentIndex] || "הגעת לסוף המילים!";
+      wordDiv.textContent = word;
+      count++;
+      counterSpan.textContent = count;
+      roundStartIndex = currentIndex;
     }
   }
 
@@ -271,6 +287,7 @@
       [words[i], words[j]] = [words[j], words[i]];
     }
     roundStartIndex = 0;
+    usedWordsInRound = [];
     resetApp(true);
   }
 
@@ -289,12 +306,12 @@
       count = -1;
       currentIndex = roundStartIndex;
     } else {
-      // כאשר לוחצים על אפס מונה, דלג על כל המילים שהוצגו עד כה
       roundStartIndex = currentIndex;
       count = -1;
       currentIndex = roundStartIndex;
     }
 
+    usedWordsInRound = [];
     counterSpan.textContent = count;
     wordDiv.textContent = 'לחץ על "קבל מילה" כדי להתחיל';
     getWordBtn.disabled = false;
@@ -304,17 +321,16 @@
     count++;
     counterSpan.textContent = count;
     successBtn.style.display = "none";
+    getWordBtn.disabled = false;
+    skipBtn.disabled = skipsLeft === 0;
   }
 
-  // מאזינים לכפתורים
   getWordBtn.addEventListener('click', showNextWord);
   skipBtn.addEventListener('click', skipWord);
   shuffleBtn.addEventListener('click', shuffleWords);
   resetBtn.addEventListener('click', () => resetApp(false));
   successBtn.addEventListener('click', successGuess);
-</script>
 
+</script>
 </body>
 </html>
-
-
